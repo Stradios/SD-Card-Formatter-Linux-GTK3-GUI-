@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=SD Card Formatter
+Comment=Format SD/USB drives (Requires Tuxera's format_sd)
+Exec=/usr/local/bin/sd_formatter_gui.py
+Icon=sdcard-formatter
+Terminal=false
+Type=Application
+Categories=Utility;System;
+StartupNotify=true
+
