@@ -11,66 +11,60 @@ from gi.repository import Gtk
 class SDFormatter(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="SD Card Formatter")
+        self.set_border_width(10)
+        self.set_default_size(420, 320)
 
         # Set window/taskbar icon
         icon_path = os.path.expanduser("~/.local/share/icons/sdcard-formatter.png")
         if os.path.exists(icon_path):
             self.set_icon_from_file(icon_path)
 
-        self.set_border_width(10)
-        self.set_default_size(420, 350)
-
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        self.add(vbox)
-
-        # Image at the top center
-        if os.path.exists(icon_path):
-            image = Gtk.Image.new_from_file(icon_path)
-            image.set_pixel_size(64)
-            image_align = Gtk.Alignment.new(0.5, 0.5, 0, 0)
-            image_align.add(image)
-            vbox.pack_start(image_align, False, False, 0)
-
+        # GUI Layout
         grid = Gtk.Grid()
         grid.set_column_spacing(10)
         grid.set_row_spacing(10)
-        vbox.pack_start(grid, True, True, 0)
+        self.add(grid)
 
-        # Device dropdown and refresh button
-        grid.attach(Gtk.Label(label="Select Device:"), 0, 0, 1, 1)
+        # Top image
+        if os.path.exists(icon_path):
+            image = Gtk.Image.new_from_file(icon_path)
+            grid.attach(image, 0, 0, 3, 1)
+
+        # Device dropdown
+        grid.attach(Gtk.Label(label="Select Device:"), 0, 1, 1, 1)
         self.device_dropdown = Gtk.ComboBoxText()
-        grid.attach(self.device_dropdown, 1, 0, 1, 1)
+        grid.attach(self.device_dropdown, 1, 1, 1, 1)
 
         self.refresh_button = Gtk.Button(label="🔄 Refresh")
         self.refresh_button.connect("clicked", self.on_refresh_clicked)
-        grid.attach(self.refresh_button, 2, 0, 1, 1)
+        grid.attach(self.refresh_button, 2, 1, 1, 1)
 
         # Volume Label
-        grid.attach(Gtk.Label(label="Volume Label:"), 0, 1, 1, 1)
+        grid.attach(Gtk.Label(label="Volume Label:"), 0, 2, 1, 1)
         self.label_entry = Gtk.Entry()
         self.label_entry.set_max_length(11)
-        grid.attach(self.label_entry, 1, 1, 2, 1)
+        grid.attach(self.label_entry, 1, 2, 2, 1)
 
-        # Format type
-        grid.attach(Gtk.Label(label="Format Type:"), 0, 2, 1, 1)
+        # Format Type
+        grid.attach(Gtk.Label(label="Format Type:"), 0, 3, 1, 1)
         self.format_type = Gtk.ComboBoxText()
         self.format_type.append_text("Quick (Default)")
         self.format_type.append_text("Discard")
         self.format_type.append_text("Overwrite")
         self.format_type.set_active(0)
-        grid.attach(self.format_type, 1, 2, 2, 1)
+        grid.attach(self.format_type, 1, 3, 2, 1)
 
         # Format Button
         self.format_button = Gtk.Button(label="Format")
         self.format_button.connect("clicked", self.on_format_clicked)
-        grid.attach(self.format_button, 1, 3, 1, 1)
+        grid.attach(self.format_button, 1, 4, 1, 1)
 
-        # Output label
+        # Output Label
         self.output_label = Gtk.Label(label="")
         self.output_label.set_line_wrap(True)
-        grid.attach(self.output_label, 0, 4, 3, 1)
+        grid.attach(self.output_label, 0, 5, 3, 2)
 
-        # Populate devices initially
+        # Load devices initially
         self.populate_devices()
 
     def populate_devices(self):
@@ -115,12 +109,41 @@ class SDFormatter(Gtk.Window):
             self.output_label.set_text("❌ No device selected.")
             return
 
-        # Extract /dev/sdX from dropdown label
         device = selected_text.split("–")[0].strip()
         if not os.path.exists(device):
             self.output_label.set_text("❌ Device path does not exist.")
             return
 
+        # 🔒 Confirm formatting
+        confirm_dialog = Gtk.MessageDialog(
+            transient_for=self,
+            flags=0,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.OK_CANCEL,
+            text=f"⚠️ Are you sure you want to format {device}?",
+        )
+        confirm_dialog.format_secondary_text("All data on this device will be permanently lost.")
+        confirm_dialog.set_title("Confirm Format")
+        response = confirm_dialog.run()
+        confirm_dialog.destroy()
+
+        if response != Gtk.ResponseType.OK:
+            self.output_label.set_text("❎ Format cancelled.")
+            return
+
+        # 🔌 Unmount all partitions
+        try:
+            lsblk_output = subprocess.check_output(["lsblk", "-ln", "-o", "NAME", device], text=True)
+            partitions = lsblk_output.strip().split("\n")[1:]  # skip the device itself
+
+            for part in partitions:
+                part_path = f"/dev/{part}"
+                subprocess.run(["udisksctl", "unmount", "-b", part_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print(f"Unmounted {part_path}")
+        except Exception as e:
+            print(f"Unmount failed: {e}")
+
+        # Format command
         cmd = ["pkexec", "./format_sd", "-l", label or "Untitled"]
         if mode == "Discard":
             cmd.append("--discard")
@@ -132,8 +155,8 @@ class SDFormatter(Gtk.Window):
             self.output_label.set_text("⚙️ Formatting in progress...")
             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if result.returncode == 0:
-                last_line = result.stdout.strip().splitlines()[-1]
-                self.output_label.set_text("✅ Success:\n" + last_line)
+                lines = result.stdout.strip().splitlines()
+                self.output_label.set_text("✅ Success:\n" + (lines[-1] if lines else "Done."))
             else:
                 self.output_label.set_text("❌ Error:\n" + result.stderr.strip())
         except Exception as e:
