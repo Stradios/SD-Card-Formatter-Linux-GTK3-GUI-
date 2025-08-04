@@ -11,21 +11,26 @@ from gi.repository import Gtk
 class SDFormatter(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="SD Card Formatter")
-        self.set_border_width(10)
-        self.set_default_size(420, 320)
 
-        # Main vertical box container
+        # Set window/taskbar icon
+        icon_path = os.path.expanduser("~/.local/share/icons/sdcard-formatter.png")
+        if os.path.exists(icon_path):
+            self.set_icon_from_file(icon_path)
+
+        self.set_border_width(10)
+        self.set_default_size(420, 350)
+
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         self.add(vbox)
 
-        # Add header image
-        image_path = os.path.expanduser("~/.local/share/icons/sdcard-formatter.png")
-        if os.path.exists(image_path):
-            logo = Gtk.Image.new_from_file(image_path)
-            logo.set_halign(Gtk.Align.CENTER)
-            vbox.pack_start(logo, False, False, 0)
+        # Image at the top center
+        if os.path.exists(icon_path):
+            image = Gtk.Image.new_from_file(icon_path)
+            image.set_pixel_size(64)
+            image_align = Gtk.Alignment.new(0.5, 0.5, 0, 0)
+            image_align.add(image)
+            vbox.pack_start(image_align, False, False, 0)
 
-        # Grid for form controls
         grid = Gtk.Grid()
         grid.set_column_spacing(10)
         grid.set_row_spacing(10)
