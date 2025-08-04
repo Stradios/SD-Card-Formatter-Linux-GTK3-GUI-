@@ -12,17 +12,24 @@ class SDFormatter(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title="SD Card Formatter")
         self.set_border_width(10)
-        self.set_default_size(420, 270)
+        self.set_default_size(420, 320)
 
-        # Optional: set window icon
-        icon_path = os.path.expanduser("~/.local/share/icons/sdcard-formatter.png")
-        if os.path.exists(icon_path):
-            self.set_icon_from_file(icon_path)
+        # Main vertical box container
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.add(vbox)
 
+        # Add header image
+        image_path = os.path.expanduser("~/.local/share/icons/sdcard-formatter.png")
+        if os.path.exists(image_path):
+            logo = Gtk.Image.new_from_file(image_path)
+            logo.set_halign(Gtk.Align.CENTER)
+            vbox.pack_start(logo, False, False, 0)
+
+        # Grid for form controls
         grid = Gtk.Grid()
         grid.set_column_spacing(10)
         grid.set_row_spacing(10)
-        self.add(grid)
+        vbox.pack_start(grid, True, True, 0)
 
         # Device dropdown and refresh button
         grid.attach(Gtk.Label(label="Select Device:"), 0, 0, 1, 1)
@@ -77,9 +84,9 @@ class SDFormatter(Gtk.Window):
                 if info.get("TYPE") == "disk" and info.get("RM") == "1":
                     name = info["NAME"]
                     size = info["SIZE"]
-                    model = info.get("MODEL", "") or "Removable"
+                    model = info.get("MODEL", "")
                     device_path = f"/dev/{name}"
-                    label = f"{device_path} – {size} – {model}"
+                    label = f"{device_path} – {size} – {model or 'Removable'}"
                     print("DEBUG ADDING:", label)
                     self.device_dropdown.append_text(label)
 
@@ -109,14 +116,7 @@ class SDFormatter(Gtk.Window):
             self.output_label.set_text("❌ Device path does not exist.")
             return
 
-        # Determine script path regardless of launch directory
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        format_sd_path = os.path.join(script_dir, "format_sd")
-        if not os.path.exists(format_sd_path):
-            self.output_label.set_text("❌ Error:\nCannot find 'format_sd' in script directory.")
-            return
-
-        cmd = ["pkexec", format_sd_path, "-l", label or "Untitled"]
+        cmd = ["pkexec", "./format_sd", "-l", label or "Untitled"]
         if mode == "Discard":
             cmd.append("--discard")
         elif mode == "Overwrite":
@@ -126,25 +126,17 @@ class SDFormatter(Gtk.Window):
         try:
             self.output_label.set_text("⚙️ Formatting in progress...")
             result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
             if result.returncode == 0:
-                stdout_lines = result.stdout.strip().splitlines()
-                if stdout_lines:
-                    last_line = stdout_lines[-1]
-                    self.output_label.set_text("✅ Success:\n" + last_line)
-                else:
-                    self.output_label.set_text("✅ Success: Device formatted (no output).")
+                last_line = result.stdout.strip().splitlines()[-1]
+                self.output_label.set_text("✅ Success:\n" + last_line)
             else:
                 self.output_label.set_text("❌ Error:\n" + result.stderr.strip())
-
         except Exception as e:
             self.output_label.set_text(f"⚠️ Exception: {e}")
             print("DEBUG ERROR:", e)
-
 
 if __name__ == "__main__":
     win = SDFormatter()
     win.connect("destroy", Gtk.main_quit)
     win.show_all()
     Gtk.main()
-
