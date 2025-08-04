@@ -2,6 +2,9 @@
 ![](https://raw.githubusercontent.com/Stradios/SD-Card-Formatter-Linux-GTK3-GUI-/refs/heads/main/sdcard-formatter-installer/icons/sdcard-formatter.png)
 
 ---
+![](https://raw.githubusercontent.com/Stradios/SD-Card-Formatter-Linux-GTK3-GUI-/refs/heads/main/Screenshot%20From%202025-08-04%2022-10-26.png)
+
+---
 
 This project provides a GTK3 front-end for [Tuxera's official SD Card Formatter](https://www.sdcard.org/downloads/sd-memory-card-formatter-for-linux/).  
 > ⚠️ Due to licensing, you **must manually download** the binary `format_sd`.
