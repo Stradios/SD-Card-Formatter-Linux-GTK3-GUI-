@@ -18,8 +18,8 @@ This project provides a GTK3 front-end for [Tuxera's official SD Card Formatter]
 tar -xzf ~/Downloads/SDCardFormatterv1.0.3_Linux_x86_64.tgz
 sudo cp SDCardFormatterv1.0.3_Linux_x86_64/format_sd /usr/local/bin
 sudo chmod +x /usr/local/bin/format_sd
-git clone https://github.com/yourname/sdcard-formatter-gui
-cd sdcard-formatter-gui
+git clone https://github.com/Stradios/SD-Card-Formatter-Linux-GTK3-GUI-.git
+cd SD-Card-Formatter-Linux-GTK3-GUI-/sdcard-formatter-installer
 chmod +x install.sh
 ./install.sh
 
