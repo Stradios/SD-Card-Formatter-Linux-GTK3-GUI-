@@ -11,7 +11,7 @@ This project provides a GTK3 front-end for [Tuxera's official SD Card Formatter]
 ## 🔧 Installation
 
 1. **Download the official formatter**:  
-   [Download `SDCardFormatterv1.0.3_Linux_x86_64.tgz`][https://www.sdcard.org/downloads/formatter/eula_linux/SDCardFormatterv1.0.3_Linux_x86_64.tgz](https://www.sdcard.org/downloads/sd-memory-card-formatter-for-linux/)
+   Download `SDCardFormatterv1.0.3_Linux_x86_64.tgz`[https://www.sdcard.org/downloads/formatter/eula_linux/SDCardFormatterv1.0.3_Linux_x86_64.tgz](https://www.sdcard.org/downloads/sd-memory-card-formatter-for-linux/)
 
 2. **Extract and copy the binary**:
 ```bash
